@@ -71,7 +71,7 @@ func (s *Secret) Call() (*resty.Response, error) {
 	if s.Scope == "project" {
 		req.SetQueryParam("orgIdentifier", s.OrgID)
 		req.SetQueryParam("projectIdentifier", s.ProjectIdentifier)
-	} else {
+	} else if s.Scope == "org" {
 		req.SetQueryParam("orgIdentifier", s.OrgID)
 	}
 
@@ -125,7 +125,7 @@ func (s *Secret) Call() (*resty.Response, error) {
 
 // AddFlags implements Command
 func (so *Options) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&so.Name, "name", "n", "", "The name of the project to create.")
+	cmd.Flags().StringVarP(&so.Name, "name", "n", "", "The name of the secret to create.")
 	cmd.MarkFlagRequired("name")
 	cmd.Flags().StringVarP(&so.Description, "description", "d", "", "The description for the project.")
 	cmd.Flags().StringVarP(&so.ProjectID, "project-id", "p", "", `The project where the secret will be created.`)
@@ -161,7 +161,7 @@ func (so *Options) Execute(cmd *cobra.Command, args []string) error {
 	if so.Scope == "project" {
 		s.OrgID = viper.GetString("org-id")
 		s.ProjectIdentifier = so.ProjectID
-	} else {
+	} else if so.Scope == "org" {
 		s.OrgID = viper.GetString("org-id")
 	}
 
@@ -234,6 +234,10 @@ var fileSecretCommandExample = fmt.Sprintf(`
   %[1]s new-secret --name foo --account-id <your account id> --project-id <project id> --file foo.txt --org-id=<orgid>
   # Create new secret from text 
   %[1]s new-secret --name foo --account-id <your account id> --project-id <project id> --text foo --type=SecretText
+  # Create new secret from text at account scope, default is project
+  %[1]s new-secret --name foo --account-id <your account id>  --text foo --type=SecretText --secret-scope="account"
+  # Create new secret from text at org scope, default is project
+  %[1]s new-secret --name foo --account-id <your account id> --text foo --type=SecretText --secret-scope="org"
 `, common.ExamplePrefix())
 
 // NewSecretCommand instantiates the new instance of the SecretCommand

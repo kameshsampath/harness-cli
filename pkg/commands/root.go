@@ -51,16 +51,16 @@ func NewRootCommand() *cobra.Command {
 	pf := rootCmd.PersistentFlags()
 
 	pf.StringVarP(&v, "verbose", "v", log.InfoLevel.String(), "The logging level to set")
-	pf.StringVarP(&apiKey, "api-key", "k", "", "The Harness API Key to use.")
+	pf.StringVarP(&apiKey, "api-key", "k", "", "The Harness API Key.")
 	rootCmd.MarkFlagRequired("api-key")
-	pf.StringVarP(&accountID, "account-id", "a", "", "The harness account id to while creating the resources.")
+	pf.StringVarP(&accountID, "account-id", "a", "", "The harness account id.")
 	rootCmd.MarkFlagRequired("account-id")
-	pf.StringVarP(&orgID, "org-id", "o", "default", "The organization id to use while creating resources.")
+	pf.StringVarP(&orgID, "org-id", "o", "default", "The organization id to use.")
 
 	rootCmd.AddCommand(NewVersionCommand())
 	rootCmd.AddCommand(project.NewProjectCommand())
 	rootCmd.AddCommand(secret.NewSecretCommand())
-	// rootCmd.AddCommand(NewKubeConfigCommand())
+	rootCmd.AddCommand(secret.NewDeleteSecretCommand())
 
 	return rootCmd
 }
