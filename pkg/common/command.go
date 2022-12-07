@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package commands
+package common
 
 import (
 	"github.com/go-resty/resty/v2"

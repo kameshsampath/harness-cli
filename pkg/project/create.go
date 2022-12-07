@@ -1,4 +1,4 @@
-package commands
+package project
 
 import (
 	"encoding/json"
@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-type ProjectOptions struct {
+type Options struct {
 	Name        string
 	Description string
 	Modules     []string
@@ -43,36 +45,27 @@ func (p *Project) Call() (*resty.Response, error) {
 }
 
 // AddFlags implements Command
-func (po *ProjectOptions) AddFlags(cmd *cobra.Command) {
+func (po *Options) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&po.Name, "name", "n", "", "The name of the project to create.")
 	cmd.MarkFlagRequired("name")
-	cmd.Flags().StringVarP(&po.Name, "description", "d", "", "The description for the project.")
+	cmd.Flags().StringVarP(&po.Description, "description", "d", "", "The description for the project.")
 	cmd.Flags().StringSliceVarP(&po.Modules, "modules", "m", []string{"CI"}, `The modules to attach to the project. Valid values are "CD" "CI" "CV" "CF" "CE" "STO" "CORE" "PMS" "TEMPLATESERVICE" "GOVERNANCE" "CHAOS".`)
 	cmd.Flags().StringArrayVarP(&po.Tags, "tags", "t", []string{""}, "The tags to attach to the project, in the format of key:value e.g. foo:bar.")
 }
 
 // Execute implements Command
-func (po *ProjectOptions) Execute(cmd *cobra.Command, args []string) error {
+func (po *Options) Execute(cmd *cobra.Command, args []string) error {
 	p := &Project{
 		APIKey:      viper.GetString("api-key"),
 		AccountID:   viper.GetString("account-id"),
 		OrgID:       viper.GetString("org-id"),
 		Name:        po.Name,
-		Identifier:  idFromName(po.Name),
+		Identifier:  utils.IDFromName(po.Name),
 		Description: po.Description,
 		Modules:     po.Modules,
 	}
 
-	if len(po.Tags) > 0 {
-		tm := make(map[string]string, len(po.Tags))
-		for _, t := range po.Tags {
-			if t != "" {
-				s := strings.Split(t, ":")
-				tm[s[0]] = s[1]
-			}
-		}
-		p.Tags = tm
-	}
+	p.Tags = utils.TagMapFromStringArray(po.Tags)
 
 	resp, err := p.Call()
 	if err != nil {
@@ -83,11 +76,11 @@ func (po *ProjectOptions) Execute(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	log.Tracef("%#v", rm)
 	if v, ok := rm["status"]; ok && v == "SUCCESS" {
-		log.Tracef("%#v", rm)
 		data := rm["data"].(map[string]interface{})
 		proj := data["project"].(map[string]interface{})
-		log.Infoln(proj["identifier"].(string))
+		fmt.Println(proj["identifier"].(string))
 	} else {
 		if v, ok := rm["code"]; ok && v == "DUPLICATE_FIELD" {
 			fmt.Printf("Project with name '%s' already exists", po.Name)
@@ -99,7 +92,7 @@ func (po *ProjectOptions) Execute(cmd *cobra.Command, args []string) error {
 }
 
 // Validate implements Command
-func (po *ProjectOptions) Validate(cmd *cobra.Command, args []string) error {
+func (po *Options) Validate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 
 	if po.Modules = viper.GetStringSlice("modules"); len(po.Modules) > 0 {
@@ -126,11 +119,11 @@ var projectCommandExample = fmt.Sprintf(`
   %[1]s project --name foo --account-id <your account id> 
   # Create project with specific organization id
   %[1]s project --name foo --account-id <your account id> --org-id=<orgid>
-`, ExamplePrefix())
+`, common.ExamplePrefix())
 
 // NewStartCommand instantiates the new instance of the StartCommand
 func NewProjectCommand() *cobra.Command {
-	po := &ProjectOptions{}
+	po := &Options{}
 
 	projCmd := &cobra.Command{
 		Use:     "project",
@@ -145,5 +138,5 @@ func NewProjectCommand() *cobra.Command {
 	return projCmd
 }
 
-var _ Command = (*ProjectOptions)(nil)
-var _ RESTCall = (*Project)(nil)
+var _ common.Command = (*Options)(nil)
+var _ common.RESTCall = (*Project)(nil)

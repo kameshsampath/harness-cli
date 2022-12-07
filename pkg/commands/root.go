@@ -21,6 +21,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kameshsampath/harness-cli/pkg/project"
+	"github.com/kameshsampath/harness-cli/pkg/secret"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,7 +50,7 @@ func NewRootCommand() *cobra.Command {
 	viper.AutomaticEnv()
 	pf := rootCmd.PersistentFlags()
 
-	pf.StringVarP(&v, "verbose", "v", log.WarnLevel.String(), "The logging level to set")
+	pf.StringVarP(&v, "verbose", "v", log.InfoLevel.String(), "The logging level to set")
 	pf.StringVarP(&apiKey, "api-key", "k", "", "The Harness API Key to use.")
 	rootCmd.MarkFlagRequired("api-key")
 	pf.StringVarP(&accountID, "account-id", "a", "", "The harness account id to while creating the resources.")
@@ -56,8 +58,8 @@ func NewRootCommand() *cobra.Command {
 	pf.StringVarP(&orgID, "org-id", "o", "default", "The organization id to use while creating resources.")
 
 	rootCmd.AddCommand(NewVersionCommand())
-	rootCmd.AddCommand(NewProjectCommand())
-	// rootCmd.AddCommand(NewDestroyCommand())
+	rootCmd.AddCommand(project.NewProjectCommand())
+	rootCmd.AddCommand(secret.NewFileSecretCommand())
 	// rootCmd.AddCommand(NewKubeConfigCommand())
 
 	return rootCmd
