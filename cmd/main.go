@@ -28,7 +28,7 @@ func init() {
 		FullTimestamp: true,
 	})
 	//include method name in the log
-	log.SetReportCaller(true)
+	log.SetReportCaller(false)
 }
 
 func main() {

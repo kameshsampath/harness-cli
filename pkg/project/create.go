@@ -121,7 +121,7 @@ var projectCommandExample = fmt.Sprintf(`
   %[1]s project --name foo --account-id <your account id> --org-id=<orgid>
 `, common.ExamplePrefix())
 
-// NewStartCommand instantiates the new instance of the StartCommand
+// NewProjectCommand instantiates the new instance of the NewProjectCommand
 func NewProjectCommand() *cobra.Command {
 	po := &Options{}
 

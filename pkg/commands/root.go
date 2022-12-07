@@ -59,7 +59,7 @@ func NewRootCommand() *cobra.Command {
 
 	rootCmd.AddCommand(NewVersionCommand())
 	rootCmd.AddCommand(project.NewProjectCommand())
-	rootCmd.AddCommand(secret.NewFileSecretCommand())
+	rootCmd.AddCommand(secret.NewSecretCommand())
 	// rootCmd.AddCommand(NewKubeConfigCommand())
 
 	return rootCmd
