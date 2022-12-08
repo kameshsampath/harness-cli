@@ -121,15 +121,15 @@ func (do *DeleteOptions) Validate(cmd *cobra.Command, args []string) error {
 // (TODO:kamesh) add more examples
 var deleteSecretCommandExample = fmt.Sprintf(`
   # Delete secret from file with default options
-  %[1]s delete-secret --name foo --account-id <your account id> --project-id <project id>
+  %[1]s secret delete --name foo --account-id <your account id> --project-id <project id>
   # Delete secret from file with  specific organization id
-  %[1]s delete-secret --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
+  %[1]s secret delete --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
   # Create new secret from text 
-  %[1]s new-secret --name foo --account-id <your account id> --project-id <project id> --text foo --type=SecretText
+  %[1]s delete --name foo --account-id <your account id> --project-id <project id> --text foo --type=SecretText
   # Create new secret from text at account scope, default is project
-  %[1]s delete-secret --name foo --account-id <your account id>  --secret-scope="account"
+  %[1]s secret delete --name foo --account-id <your account id>  --secret-scope="account"
   # Create delete secret at org scope, default is project
-  %[1]s delete-secret --name foo --account-id <your account id>  --secret-scope="org"
+  %[1]s secret delete --name foo --account-id <your account id>  --secret-scope="org"
 `, common.ExamplePrefix())
 
 // NewDeleteSecretCommand instantiates the new instance of the DeleteSecretCommand
@@ -137,7 +137,7 @@ func NewDeleteSecretCommand() *cobra.Command {
 	do := &DeleteOptions{}
 
 	sfCmd := &cobra.Command{
-		Use:     "delete-secret",
+		Use:     "delete",
 		Short:   "Delete a secret.",
 		Example: deleteSecretCommandExample,
 		RunE:    do.Execute,

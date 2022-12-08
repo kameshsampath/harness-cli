@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kameshsampath/harness-cli/pkg/connector"
 	"github.com/kameshsampath/harness-cli/pkg/project"
 	"github.com/kameshsampath/harness-cli/pkg/secret"
 	log "github.com/sirupsen/logrus"
@@ -40,6 +41,7 @@ func NewRootCommand() *cobra.Command {
 			}
 			return nil
 		},
+		TraverseChildren: true,
 	}
 
 	// what should the env prefix while loading the environment variables
@@ -57,10 +59,11 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.MarkFlagRequired("account-id")
 	pf.StringVarP(&orgID, "org-id", "o", "default", "The organization id to use.")
 
+	//Commands
 	rootCmd.AddCommand(NewVersionCommand())
-	rootCmd.AddCommand(project.NewProjectCommand())
-	rootCmd.AddCommand(secret.NewSecretCommand())
-	rootCmd.AddCommand(secret.NewDeleteSecretCommand())
+	rootCmd.AddCommand(project.NewProjectCommands())
+	rootCmd.AddCommand(secret.NewSecretCommands())
+	rootCmd.AddCommand(connector.NewConnectorsCommands())
 
 	return rootCmd
 }
