@@ -30,7 +30,8 @@ type CreateOptions struct {
 	Scope              string
 	URL                string
 	// "DockerHub" "Harbor" "Quay" "Other"
-	ProviderType string
+	ProviderType      string
+	DelegateSelectors []string
 }
 
 type UserNamePasswordAuth struct {
@@ -48,7 +49,8 @@ type Spec struct {
 	URL               string         `json:"dockerRegistryUrl"`
 	ExecuteOnDelegate bool           `json:"executeOnDelegate"`
 	// "DockerHub" "Harbor" "Quay" "Other"
-	ProviderType string `json:"providerType"`
+	ProviderType      string   `json:"providerType"`
+	DelegateSelectors []string `json:"delegateSelectors,omitempty"`
 }
 
 type Connector struct {
@@ -96,6 +98,7 @@ func (co *CreateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&co.ProjectID, "project-id", "p", "", `The project where the connector will be created.`)
 	cmd.Flags().StringVarP(&co.Scope, "connector-scope", "", "project", `The connector scope. Valid value is one of "project", "org", "account"`)
 	cmd.Flags().BoolVarP(&co.ExecuteOnDelegate, "execute-on-delegate", "", true, "Allow the connector to execute on delegate.")
+	cmd.Flags().StringSliceVarP(&co.DelegateSelectors, "delegate-tags", "", []string{}, `The delegate tags that will be used to select the available delegate that will be used by the connector.`)
 }
 
 // Execute implements common.Command
@@ -139,6 +142,10 @@ func (co *CreateOptions) Execute(cmd *cobra.Command, args []string) error {
 			Type: anonymousAuthType,
 			Spec: nil,
 		}
+	}
+
+	if len(co.DelegateSelectors) > 0 {
+		spec.DelegateSelectors = co.DelegateSelectors
 	}
 
 	ci.Spec = spec
@@ -188,6 +195,10 @@ func scopedName(scope, name string) string {
 // Validate implements common.Command
 func (co *CreateOptions) Validate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
+	authType := co.AuthenticationType
+	if authType == "Http" && (co.UserName == "" || co.Password == "") {
+		return fmt.Errorf(`"username" and "password" is required for Http authentication`)
+	}
 	return nil
 }
 

@@ -18,6 +18,7 @@ type CreateOptions struct {
 	AuthenticationType string
 	// Token or GithubApp or OAuth
 	APIAccessType       string
+	DelegateSelectors   []string
 	Name                string
 	ExecuteOnDelegate   bool
 	EnableAPIAccess     bool
@@ -61,11 +62,12 @@ type Spec struct {
 	Authentication Authentication `json:"authentication"`
 	APIAccess      APIAccess      `json:"apiAccess,omitempty"`
 	//Always GitHubConnector
-	ConnectorType     string `json:"connectorType"`
-	URL               string `json:"url"`
-	ValidationRepo    string `json:"validationRepo"`
-	ExecuteOnDelegate bool   `json:"executeOnDelegate"`
-	Type              string `json:"type"`
+	ConnectorType     string   `json:"connectorType"`
+	URL               string   `json:"url"`
+	ValidationRepo    string   `json:"validationRepo"`
+	ExecuteOnDelegate bool     `json:"executeOnDelegate"`
+	Type              string   `json:"type"`
+	DelegateSelectors []string `json:"delegateSelectors,omitempty"`
 }
 
 type Connector struct {
@@ -118,6 +120,7 @@ func (co *CreateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&co.ExecuteOnDelegate, "execute-on-delegate", "", true, "Allow the connector to execute on available delegate.")
 	cmd.Flags().BoolVarP(&co.EnableAPIAccess, "enable-api-access", "", true, "Enable GitHub API Access. Only token type supported.")
 	cmd.Flags().StringVarP(&co.APIAccessType, "api-access-type", "", "Token", `GitHub API Access type. One of "Token" or "GithubApp" or "OAuth"`)
+	cmd.Flags().StringSliceVarP(&co.DelegateSelectors, "delegate-tags", "", []string{}, `The delegate tags that will be used to select the available delegate that will be used by the connector.`)
 }
 
 // Execute implements common.Command
@@ -169,6 +172,10 @@ func (co *CreateOptions) Execute(cmd *cobra.Command, args []string) error {
 				TokenRef: scopedName(co.Scope, co.PersonalAccessToken),
 			},
 		}
+	}
+
+	if len(co.DelegateSelectors) > 0 {
+		spec.DelegateSelectors = co.DelegateSelectors
 	}
 
 	ci.Spec = spec

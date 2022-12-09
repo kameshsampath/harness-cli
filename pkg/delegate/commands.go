@@ -23,6 +23,7 @@ import (
 func NewDelegateCommands() *cobra.Command {
 	dCmd := &cobra.Command{
 		Use:              "delegate",
+		Aliases:          []string{"dl"},
 		Short:            "Group of commands to manipulate the delegates.",
 		TraverseChildren: true,
 	}

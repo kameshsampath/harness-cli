@@ -51,8 +51,8 @@ type Connector struct {
 
 // Call implements common.RESTCall
 func (c *Connector) Call() (*resty.Response, error) {
-	b, _ := json.Marshal(c)
-	log.Infof("Payload:%s", string(b))
+	// b, _ := json.Marshal(c)
+	// log.Infof("Payload:%s", string(b))
 
 	var resp *resty.Response
 	var err error

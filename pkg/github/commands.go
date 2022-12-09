@@ -23,6 +23,7 @@ import (
 func NewGitHubConnectorCommands() *cobra.Command {
 	ghcCmd := &cobra.Command{
 		Use:              "github",
+		Aliases:          []string{"gh"},
 		Short:            "Group of commands to manipulate the GitHub connectors.",
 		TraverseChildren: true,
 	}

@@ -22,8 +22,9 @@ import (
 
 func NewGCPConnectorCommands() *cobra.Command {
 	dCmd := &cobra.Command{
-		Use:              "gcp",
-		Short:            "Group of commands to manipulate the GCP connector.",
+		Use:              "google-cloud",
+		Aliases:          []string{"gcp"},
+		Short:            "Group of commands to manipulate the Google Cloud Platform connector.",
 		TraverseChildren: true,
 	}
 

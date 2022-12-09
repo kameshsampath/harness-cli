@@ -26,6 +26,7 @@ import (
 func NewConnectorsCommands() *cobra.Command {
 	connCmd := &cobra.Command{
 		Use:              "connectors",
+		Aliases:          []string{"con"},
 		Short:            "Group of commands to manipulate the connectors.",
 		TraverseChildren: true,
 	}

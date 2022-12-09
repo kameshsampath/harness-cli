@@ -23,6 +23,7 @@ import (
 func NewDockerConnectorCommands() *cobra.Command {
 	dCmd := &cobra.Command{
 		Use:              "docker-registry",
+		Aliases:          []string{"dr"},
 		Short:            "Group of commands to manipulate the docker registry connectors.",
 		TraverseChildren: true,
 	}
