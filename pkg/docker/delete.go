@@ -1,4 +1,4 @@
-package github
+package docker
 
 import (
 	"encoding/json"
@@ -70,7 +70,7 @@ func (dc *DeleteConnector) Call() (*resty.Response, error) {
 
 // AddFlags implements Command
 func (do *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&do.Name, "name", "n", "", "The name of the secret to delete.")
+	cmd.Flags().StringVarP(&do.Name, "name", "n", "", "The name of the docker registry connector to delete.")
 	cmd.MarkFlagRequired("name")
 	cmd.Flags().StringVarP(&do.ProjectID, "project-id", "p", "", `The project where the secret will be deleted.`)
 	cmd.Flags().StringVarP(&do.Scope, "connector-scope", "", "project", `The secret scope. Valid value is one of "project", "org", "account"`)
@@ -104,7 +104,7 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 	if v, ok := rm["status"]; ok && v == "SUCCESS" {
 		log.Tracef("%#v", rm)
 		if rm["data"].(bool) {
-			fmt.Printf(`GitHub Connector "%s" deleted successfully`, do.Name)
+			fmt.Printf(`Docker Registry Connector "%s" deleted successfully`, do.Name)
 		}
 	} else {
 		log.Errorf("%#v", rm)
@@ -119,32 +119,32 @@ func (do *DeleteOptions) Validate(cmd *cobra.Command, args []string) error {
 }
 
 // (TODO:kamesh) add more examples
-var deleteGHConnectorCommandExample = fmt.Sprintf(`
+var commandExample = fmt.Sprintf(`
   # Delete connector default options
-  %[1]s github delete --name foo --account-id <your account id> --project-id <project id>
+  %[1]s docker-registry delete --name foo --account-id <your account id> --project-id <project id>
   # Delete connector specific project id
-  %[1]s github delete --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
+  %[1]s docker-registry delete --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
   # Delete connector at account level
-  %[1]s github delete --name foo --account-id <your account id>  --secret-scope="account"
+  %[1]s docker-registry delete --name foo --account-id <your account id>  --secret-scope="account"
   # Create delete at org level
-  %[1]s github delete --name foo --account-id <your account id>  --secret-scope="org"
+  %[1]s docker-registry delete --name foo --account-id <your account id>  --secret-scope="org"
 `, common.ExamplePrefix())
 
-// NewDeleteGitHubConnectorCommand instantiates the new instance of the NewDeleteGitHubConnectorCommand
-func NewDeleteGitHubConnectorCommand() *cobra.Command {
+// NewDeleteDockerConnectorCommand instantiates the new instance of the NewDeleteDockerConnectorCommand
+func NewDeleteDockerConnectorCommand() *cobra.Command {
 	do := &DeleteOptions{}
 
-	ghcCmd := &cobra.Command{
+	drCmd := &cobra.Command{
 		Use:     "delete",
-		Short:   "Deletes a Github Connector.",
-		Example: deleteGHConnectorCommandExample,
+		Short:   "Deletes a Docker Registry Connector.",
+		Example: commandExample,
 		RunE:    do.Execute,
 		PreRunE: do.Validate,
 	}
 
-	do.AddFlags(ghcCmd)
+	do.AddFlags(drCmd)
 
-	return ghcCmd
+	return drCmd
 }
 
 var _ common.Command = (*DeleteOptions)(nil)

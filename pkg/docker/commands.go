@@ -14,24 +14,23 @@
  *  limitations under the License.
  */
 
-package connector
+package docker
 
 import (
-	"github.com/kameshsampath/harness-cli/pkg/docker"
-	"github.com/kameshsampath/harness-cli/pkg/github"
 	"github.com/spf13/cobra"
 )
 
-func NewConnectorsCommands() *cobra.Command {
-	connCmd := &cobra.Command{
-		Use:              "connectors",
-		Short:            "Group of commands to manipulate the connectors.",
+func NewDockerConnectorCommands() *cobra.Command {
+	dCmd := &cobra.Command{
+		Use:              "docker-registry",
+		Short:            "Group of commands to manipulate the docker registry connectors.",
 		TraverseChildren: true,
 	}
 
 	//Commands
-	connCmd.AddCommand(github.NewGitHubConnectorCommands())
-	connCmd.AddCommand(docker.NewDockerConnectorCommands())
 
-	return connCmd
+	dCmd.AddCommand(NewDockerConnectorCommand())
+	dCmd.AddCommand(NewDeleteDockerConnectorCommand())
+
+	return dCmd
 }

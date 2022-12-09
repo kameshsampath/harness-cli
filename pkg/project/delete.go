@@ -84,7 +84,7 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 	if v, ok := rm["status"]; ok && v == "SUCCESS" {
 		log.Tracef("%#v", rm)
 		if rm["data"].(bool) {
-			fmt.Printf("Project %s deleted successfully", do.Name)
+			fmt.Printf(`Project "%s" deleted successfully`, do.Name)
 		}
 	} else {
 		log.Errorf("%#v", rm)
