@@ -1,16 +1,13 @@
 package docker
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/types"
 	"github.com/kameshsampath/harness-cli/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -53,37 +50,7 @@ type Spec struct {
 	DelegateSelectors []string `json:"delegateSelectors,omitempty"`
 }
 
-type Connector struct {
-	ConnectorInfo common.Connector `json:"connector"`
-}
-
-// Call implements common.RESTCall
-func (c *Connector) Call() (*resty.Response, error) {
-	b, _ := json.Marshal(c)
-	log.Infof("Payload:%s", string(b))
-	var resp *resty.Response
-	var err error
-
-	client := resty.New()
-	req := client.R().
-		EnableTrace().
-		SetHeader("x-api-key", c.ConnectorInfo.APIKey).
-		SetQueryParam("accountIdentifier", c.ConnectorInfo.AccountID)
-
-	log.Infof("Creating Docker Registry Connector %s ", c.ConnectorInfo.Name)
-
-	resp, err = req.
-		SetHeader("Content-Type", "application/json").
-		SetBody(c).
-		Post("https://app.harness.io/gateway/ng/api/connectors")
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, err
-}
-
-// AddFlags implements common.Command
+// AddFlags implements types.Command
 func (co *CreateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&co.Name, "name", "n", "", "The name of the connector.")
 	cmd.MarkFlagRequired("name")
@@ -101,9 +68,9 @@ func (co *CreateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&co.DelegateSelectors, "delegate-tags", "", []string{}, `The delegate tags that will be used to select the available delegate that will be used by the connector.`)
 }
 
-// Execute implements common.Command
+// Execute implements types.Command
 func (co *CreateOptions) Execute(cmd *cobra.Command, args []string) error {
-	ci := &common.Connector{
+	c := &types.Connector{
 		APIKey:     viper.GetString("api-key"),
 		AccountID:  viper.GetString("account-id"),
 		Name:       co.Name,
@@ -113,10 +80,10 @@ func (co *CreateOptions) Execute(cmd *cobra.Command, args []string) error {
 	}
 
 	if co.Scope == "project" {
-		ci.OrgID = viper.GetString("org-id")
-		ci.ProjectID = co.ProjectID
+		c.OrgID = viper.GetString("org-id")
+		c.ProjectID = co.ProjectID
 	} else if co.Scope == "org" {
-		ci.OrgID = viper.GetString("org-id")
+		c.OrgID = viper.GetString("org-id")
 	}
 
 	// (TODO: kamesh) Enable API Access, Delegates
@@ -148,36 +115,15 @@ func (co *CreateOptions) Execute(cmd *cobra.Command, args []string) error {
 		spec.DelegateSelectors = co.DelegateSelectors
 	}
 
-	ci.Spec = spec
+	c.Spec = spec
 
-	c := &Connector{
-		ConnectorInfo: *ci,
+	ci := &types.ConnectorInfo{
+		ConnectorInfo: *c,
 	}
 
-	resp, err := c.Call()
+	ci.Call()
 
-	if err != nil {
-		return err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return err
-	}
-	if v, ok := rm["status"]; ok && v == "SUCCESS" {
-		log.Tracef("%#v", rm)
-		data := rm["data"].(map[string]interface{})
-		conn := data["connector"].(map[string]interface{})
-		fmt.Println(conn["identifier"].(string))
-	} else {
-		if v, ok := rm["code"]; ok && v == "DUPLICATE_FIELD" {
-			fmt.Printf("GitHub Connector with name '%s' already exists", co.Name)
-			return nil
-		}
-		log.Errorf("%#v", rm)
-	}
-
-	return err
+	return nil
 }
 
 func scopedName(scope, name string) string {
@@ -192,7 +138,7 @@ func scopedName(scope, name string) string {
 	return name
 }
 
-// Validate implements common.Command
+// Validate implements types.Command
 func (co *CreateOptions) Validate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 	authType := co.AuthenticationType
@@ -231,5 +177,4 @@ func NewDockerConnectorCommand() *cobra.Command {
 	return dCmd
 }
 
-var _ common.Command = (*CreateOptions)(nil)
-var _ common.RESTCall = (*Connector)(nil)
+var _ types.Command = (*CreateOptions)(nil)

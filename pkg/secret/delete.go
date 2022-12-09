@@ -1,11 +1,10 @@
 package secret
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/types"
 	"github.com/kameshsampath/harness-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -29,43 +28,22 @@ type DeleteSecret struct {
 }
 
 // Run implements RESTCall
-func (ds *DeleteSecret) Call() (*resty.Response, error) {
-	var resp *resty.Response
+func (ds *DeleteSecret) Call() (map[string]interface{}, error) {
+	req := utils.NewHTTPRequest(ds.APIKey, ds.AccountID)
+	utils.AddScopedIDQueryParams(req, ds.Scope, ds.OrgID, ds.ProjectIdentifier)
+	return utils.DeleteResourceByID(req, "https://app.harness.io/gateway/ng/api/v2/secrets/{id}", ds.Identifier)
+}
 
-	client := resty.New()
-	req := client.R().
-		EnableTrace().
-		SetHeader("x-api-key", ds.APIKey).
-		SetQueryParam("accountIdentifier", ds.AccountID)
-
-	if ds.Scope == "project" {
-		req.SetQueryParam("orgIdentifier", ds.OrgID)
-		req.SetQueryParam("projectIdentifier", ds.ProjectIdentifier)
-	} else if ds.Scope == "org" {
-		req.SetQueryParam("orgIdentifier", ds.OrgID)
+// Print implements Command
+func (ds *DeleteSecret) Print(rm map[string]interface{}, err error) {
+	if v, ok := rm["status"]; ok && v == "SUCCESS" {
+		log.Tracef("%#v", rm)
+		if rm["data"].(bool) {
+			fmt.Printf(`Secret "%s" deleted successfully`, ds.Identifier)
+		}
+	} else {
+		log.Errorf("%#v", rm)
 	}
-
-	req.
-		SetPathParams(map[string]string{
-			"id": ds.Identifier,
-		})
-
-	log.Tracef("%#v", req)
-
-	resp, err := req.
-		Delete("https://app.harness.io/gateway/ng/api/v2/secrets/{id}")
-	if err != nil {
-		return nil, err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Tracef("%#v", rm)
-
-	return resp, err
 }
 
 // AddFlags implements Command
@@ -92,23 +70,8 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 		ds.OrgID = viper.GetString("org-id")
 	}
 
-	resp, err := ds.Call()
-	if err != nil {
-		return err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return err
-	}
-	if v, ok := rm["status"]; ok && v == "SUCCESS" {
-		log.Tracef("%#v", rm)
-		if rm["data"].(bool) {
-			fmt.Printf(`Secret "%s" deleted successfully`, do.Name)
-		}
-	} else {
-		log.Errorf("%#v", rm)
-	}
+	ds.Print(ds.Call())
+
 	return nil
 }
 
@@ -132,8 +95,8 @@ var deleteSecretCommandExample = fmt.Sprintf(`
   %[1]s secret delete --name foo --account-id <your account id>  --secret-scope="org"
 `, common.ExamplePrefix())
 
-// NewDeleteSecretCommand instantiates the new instance of the DeleteSecretCommand
-func NewDeleteSecretCommand() *cobra.Command {
+// newDeleteSecretCommand instantiates the new instance of the newDeleteSecretCommand
+func newDeleteSecretCommand() *cobra.Command {
 	do := &DeleteOptions{}
 
 	sfCmd := &cobra.Command{
@@ -149,5 +112,5 @@ func NewDeleteSecretCommand() *cobra.Command {
 	return sfCmd
 }
 
-var _ common.Command = (*DeleteOptions)(nil)
-var _ common.RESTCall = (*DeleteSecret)(nil)
+var _ types.Command = (*DeleteOptions)(nil)
+var _ types.RESTCall = (*DeleteSecret)(nil)

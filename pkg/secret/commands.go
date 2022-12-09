@@ -29,8 +29,8 @@ func NewSecretCommands() *cobra.Command {
 
 	//Commands
 
-	secretCmd.AddCommand(NewSecretCommand())
-	secretCmd.AddCommand(NewDeleteSecretCommand())
+	secretCmd.AddCommand(newSecretCommand())
+	secretCmd.AddCommand(newDeleteSecretCommand())
 
 	return secretCmd
 }

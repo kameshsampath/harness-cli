@@ -10,13 +10,13 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package common
+package types
 
 import (
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 )
 
+// Command defines the common methods that a command should have
 type Command interface {
 
 	//AddFlags adds the flags to the commands
@@ -30,6 +30,11 @@ type Command interface {
 	Execute(cmd *cobra.Command, args []string) error
 }
 
+// RESTCall aids in calling the REST API
 type RESTCall interface {
-	Call() (*resty.Response, error)
+	// Calls the API
+	Call() (map[string]interface{}, error)
+
+	// Print the result or error
+	Print(map[string]interface{}, error)
 }

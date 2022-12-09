@@ -1,11 +1,10 @@
 package connector
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/types"
 	"github.com/kameshsampath/harness-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -29,43 +28,22 @@ type DeleteConnector struct {
 }
 
 // Run implements RESTCall
-func (dc *DeleteConnector) Call() (*resty.Response, error) {
-	var resp *resty.Response
+func (dc *DeleteConnector) Call() (map[string]interface{}, error) {
+	req := utils.NewHTTPRequest(dc.APIKey, dc.AccountID)
+	utils.AddScopedIDQueryParams(req, dc.Scope, dc.OrgID, dc.ProjectIdentifier)
+	return utils.DeleteResourceByID(req, "https://app.harness.io/gateway/ng/api/connectors/{id}", dc.Identifier)
+}
 
-	client := resty.New()
-	req := client.R().
-		EnableTrace().
-		SetHeader("x-api-key", dc.APIKey).
-		SetQueryParam("accountIdentifier", dc.AccountID)
-
-	if dc.Scope == "project" {
-		req.SetQueryParam("orgIdentifier", dc.OrgID)
-		req.SetQueryParam("projectIdentifier", dc.ProjectIdentifier)
-	} else if dc.Scope == "org" {
-		req.SetQueryParam("orgIdentifier", dc.OrgID)
+// Print implements common.Command
+func (dc *DeleteConnector) Print(rm map[string]interface{}, err error) {
+	if v, ok := rm["status"]; ok && v == "SUCCESS" {
+		log.Tracef("%#v", rm)
+		if rm["data"].(bool) {
+			fmt.Printf(`Connector "%s" deleted successfully`, dc.Identifier)
+		}
+	} else {
+		log.Errorf("%#v", rm)
 	}
-
-	req.
-		SetPathParams(map[string]string{
-			"id": dc.Identifier,
-		})
-
-	log.Tracef("%#v", req)
-
-	resp, err := req.
-		Delete("https://app.harness.io/gateway/ng/api/connectors/{id}")
-	if err != nil {
-		return nil, err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Tracef("%#v", rm)
-
-	return resp, err
 }
 
 // AddFlags implements Command
@@ -78,7 +56,7 @@ func (do *DeleteOptions) AddFlags(cmd *cobra.Command) {
 
 // Execute implements Command
 func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
-	ds := &DeleteConnector{
+	dc := &DeleteConnector{
 		APIKey:     viper.GetString("api-key"),
 		AccountID:  viper.GetString("account-id"),
 		Identifier: utils.IDFromName(do.Name),
@@ -86,29 +64,14 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 	}
 
 	if do.Scope == "project" {
-		ds.OrgID = viper.GetString("org-id")
-		ds.ProjectIdentifier = do.ProjectID
+		dc.OrgID = viper.GetString("org-id")
+		dc.ProjectIdentifier = do.ProjectID
 	} else if do.Scope == "org" {
-		ds.OrgID = viper.GetString("org-id")
+		dc.OrgID = viper.GetString("org-id")
 	}
 
-	resp, err := ds.Call()
-	if err != nil {
-		return err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return err
-	}
-	if v, ok := rm["status"]; ok && v == "SUCCESS" {
-		log.Tracef("%#v", rm)
-		if rm["data"].(bool) {
-			fmt.Printf(`Connector "%s" deleted successfully`, do.Name)
-		}
-	} else {
-		log.Errorf("%#v", rm)
-	}
+	dc.Print(dc.Call())
+
 	return nil
 }
 
@@ -147,5 +110,5 @@ func NewDeleteConnectorCommand() *cobra.Command {
 	return drCmd
 }
 
-var _ common.Command = (*DeleteOptions)(nil)
-var _ common.RESTCall = (*DeleteConnector)(nil)
+var _ types.Command = (*DeleteOptions)(nil)
+var _ types.RESTCall = (*DeleteConnector)(nil)

@@ -5,77 +5,55 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/types"
+	"github.com/kameshsampath/harness-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 type ListOptions struct {
+	// The project identifier used to identify the project
 	ProjectID string
-	Scope     string
-	Tags      []string
+	// The scope of the resource "account", "org" or "project"
+	Scope string
+	// The tags that will be used to filter the delegate
+	Tags []string
 }
 
 type List struct {
-	APIKey            string   `json:"-"`
-	AccountID         string   `json:"-"`
-	ProjectIdentifier string   `json:"-"`
-	OrgID             string   `json:"-"`
-	Scope             string   `json:"-"`
-	Tags              []string `json:"tags"`
+	// APIKey holds the API Key for the API calls
+	APIKey string `json:"-"`
+	// AccountID holds the AccountID that will be used for API calls
+	AccountID string `json:"-"`
+	// ProjectIdentifier the project identifier will attach the resource the project
+	ProjectIdentifier string `json:"-"`
+	// OrgID the organisation ID under which the project "ProjectIdentifier" resides
+	OrgID string `json:"-"`
+	// The scope of the resource "account", "org" or "project"
+	Scope string `json:"-"`
+	// The tags that will be used to filter the delegate
+	Tags []string `json:"tags"`
 }
 
-// AddFlags implements common.Command
+// AddFlags implements types.Command
 func (lo *ListOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&lo.Scope, "delegate-scope", "", "project", `The scope of the delegate. Valid value is one of "project", "org", "account"`)
 	cmd.Flags().StringSliceVarP(&lo.Tags, "tags", "t", []string{}, "The tags that will be used to filter the delegate")
 }
 
 // Call implements common.RESTCall
-func (l *List) Call() (*resty.Response, error) {
-	var resp *resty.Response
-	var err error
-
-	client := resty.New()
-	req := client.R().
-		EnableTrace().
-		SetHeader("x-api-key", l.APIKey).
-		SetQueryParam("accountIdentifier", l.AccountID)
-
-	if l.Scope == "project" {
-		req.SetQueryParam("orgIdentifier", l.OrgID)
-		req.SetQueryParam("projectIdentifier", l.ProjectIdentifier)
-	} else if l.Scope == "org" {
-		req.SetQueryParam("orgIdentifier", l.OrgID)
-	}
+func (l *List) Call() (map[string]interface{}, error) {
+	req := utils.NewHTTPRequest(l.APIKey, l.AccountID)
+	utils.AddScopedIDQueryParams(req, l.Scope, l.OrgID, l.ProjectIdentifier)
 
 	log.Infof("Getting list of delegates for tags %v ", l.Tags)
 
-	resp, err = req.
-		SetHeader("Content-Type", "application/json").
-		SetBody(l).
-		Post("https://app.harness.io/gateway/ng/api/delegate-group-tags/delegate-groups")
-
-	log.Tracef("URL %s", resp.Request.URL)
-	log.Tracef("BODY %s", resp.Request.Body)
-
-	if err != nil {
-		return nil, err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Tracef("%#v", rm)
-
-	return resp, err
+	return utils.PostJSON(req, "https://app.harness.io/gateway/ng/api/delegate-group-tags/delegate-groups", l)
 }
 
-// Execute implements common.Command
+// Execute implements types.Command
 func (lo *ListOptions) Execute(cmd *cobra.Command, args []string) error {
 	l := &List{
 		APIKey:    viper.GetString("api-key"),
@@ -91,20 +69,22 @@ func (lo *ListOptions) Execute(cmd *cobra.Command, args []string) error {
 		l.OrgID = viper.GetString("org-id")
 	}
 
-	resp, err := l.Call()
+	l.Print(l.Call())
+
+	return nil
+}
+
+// Print implements types.Command
+func (l *List) Print(rm map[string]interface{}, err error) {
 	if err != nil {
-		return err
+		log.Errorf("%s", err)
 	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return err
-	}
+
 	log.Tracef("%#v", rm)
 	if v, ok := rm["status"]; ok && v == "ERROR" {
 		fmt.Printf(rm["message"].(string))
-		return nil
 	}
+
 	var resMap []map[string]string
 	if v, ok := rm["resource"]; ok {
 		resources := v.([]interface{})
@@ -120,10 +100,9 @@ func (lo *ListOptions) Execute(cmd *cobra.Command, args []string) error {
 		en := json.NewEncoder(os.Stdout)
 		en.Encode(resMap)
 	}
-	return err
 }
 
-// Validate implements common.Command
+// Validate implements types.Command
 func (lo *ListOptions) Validate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 	return nil
@@ -135,8 +114,8 @@ var listCommandExample = fmt.Sprintf(`
 %[1]s delegate list --account-id <your account id> --project-id <project id> --tag "foo" --tag "bar"
 `, common.ExamplePrefix())
 
-// NewDelegatesListCommand instantiates the new instance of the NewDelegatesListCommand
-func NewDelegatesListCommand() *cobra.Command {
+// newListCommand instantiates the new instance of the delegate list command
+func newListCommand() *cobra.Command {
 	lo := &ListOptions{}
 
 	ldCmd := &cobra.Command{
@@ -152,5 +131,5 @@ func NewDelegatesListCommand() *cobra.Command {
 	return ldCmd
 }
 
-var _ common.Command = (*ListOptions)(nil)
-var _ common.RESTCall = (*List)(nil)
+var _ types.Command = (*ListOptions)(nil)
+var _ types.RESTCall = (*List)(nil)

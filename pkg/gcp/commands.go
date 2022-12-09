@@ -29,7 +29,7 @@ func NewGCPConnectorCommands() *cobra.Command {
 	}
 
 	//Commands
-	dCmd.AddCommand(NewGCPConnectorCommand())
+	dCmd.AddCommand(newConnectorCommand())
 
 	return dCmd
 }

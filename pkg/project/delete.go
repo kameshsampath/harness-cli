@@ -1,11 +1,10 @@
 package project
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/kameshsampath/harness-cli/pkg/common"
+	"github.com/kameshsampath/harness-cli/pkg/types"
 	"github.com/kameshsampath/harness-cli/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,64 +22,27 @@ type DeleteProject struct {
 	OrgID      string
 }
 
-// Run implements RESTCall
-func (dp *DeleteProject) Call() (*resty.Response, error) {
-	var resp *resty.Response
-
-	client := resty.New()
-	req := client.R().
-		EnableTrace().
-		SetHeader("x-api-key", dp.APIKey).
-		SetQueryParam("accountIdentifier", dp.AccountID).
-		SetQueryParam("orgIdentifier", dp.OrgID)
-
-	req.
-		SetPathParams(map[string]string{
-			"id": dp.Identifier,
-		})
-
-	log.Tracef("%#v", req)
-
-	resp, err := req.
-		Delete("https://app.harness.io/gateway/ng/api/projects/{id}")
-	if err != nil {
-		return nil, err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Tracef("%#v", rm)
-
-	return resp, err
+// Run implements types.RESTCall
+func (dp *DeleteProject) Call() (map[string]interface{}, error) {
+	req := utils.NewHTTPRequest(dp.APIKey, dp.AccountID)
+	utils.AddScopedIDQueryParams(req, "", dp.OrgID, "")
+	return utils.DeleteResourceByID(req, "https://app.harness.io/gateway/ng/api/projects/{id}", dp.Identifier)
 }
 
-// AddFlags implements Command
-func (do *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&do.Name, "name", "n", "", "The name of the secret to delete.")
-	cmd.MarkFlagRequired("name")
+// Validate implements types.Command
+func (dp *DeleteProject) Print(rm map[string]interface{}, err error) {
+	if v, ok := rm["status"]; ok && v == "SUCCESS" {
+		log.Tracef("%#v", rm)
+		if rm["data"].(bool) {
+			fmt.Printf(`Project "%s" deleted successfully`, dp.Identifier)
+		}
+	} else {
+		log.Errorf("%#v", rm)
+	}
 }
 
-// Execute implements Command
-func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
-	ds := &DeleteProject{
-		APIKey:     viper.GetString("api-key"),
-		AccountID:  viper.GetString("account-id"),
-		OrgID:      viper.GetString("org-id"),
-		Identifier: utils.IDFromName(do.Name),
-	}
-
-	resp, err := ds.Call()
-	if err != nil {
-		return err
-	}
-	var rm map[string]interface{}
-	err = json.Unmarshal(resp.Body(), &rm)
-	if err != nil {
-		return err
-	}
+// Validate implements types.Command
+func (do *DeleteOptions) Print(rm map[string]interface{}, err error) {
 	if v, ok := rm["status"]; ok && v == "SUCCESS" {
 		log.Tracef("%#v", rm)
 		if rm["data"].(bool) {
@@ -89,10 +51,29 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 	} else {
 		log.Errorf("%#v", rm)
 	}
+}
+
+// AddFlags implements types.Command
+func (do *DeleteOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&do.Name, "name", "n", "", "The name of the secret to delete.")
+	cmd.MarkFlagRequired("name")
+}
+
+// Execute implements types.Command
+func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
+	ds := &DeleteProject{
+		APIKey:     viper.GetString("api-key"),
+		AccountID:  viper.GetString("account-id"),
+		OrgID:      viper.GetString("org-id"),
+		Identifier: utils.IDFromName(do.Name),
+	}
+
+	ds.Print(ds.Call())
+
 	return nil
 }
 
-// Validate implements Command
+// Validate implements types.Command
 func (do *DeleteOptions) Validate(cmd *cobra.Command, args []string) error {
 	viper.BindPFlags(cmd.Flags())
 	return nil
@@ -106,8 +87,8 @@ var deleteProjectCommandExample = fmt.Sprintf(`
   %[1]s project delete --name foo --account-id <your account id> --org-id=<org id>
 `, common.ExamplePrefix())
 
-// NewDeleteProjectCommand instantiates the new instance of the NewDeleteProjectCommand
-func NewDeleteProjectCommand() *cobra.Command {
+// newDeleteProjectCommand instantiates the new instance of the newDeleteProjectCommand
+func newDeleteProjectCommand() *cobra.Command {
 	do := &DeleteOptions{}
 
 	sfCmd := &cobra.Command{
@@ -123,5 +104,5 @@ func NewDeleteProjectCommand() *cobra.Command {
 	return sfCmd
 }
 
-var _ common.Command = (*DeleteOptions)(nil)
-var _ common.RESTCall = (*DeleteProject)(nil)
+var _ types.Command = (*DeleteOptions)(nil)
+var _ types.RESTCall = (*DeleteProject)(nil)

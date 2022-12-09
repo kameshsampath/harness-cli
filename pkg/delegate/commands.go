@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewDelegateCommands is parent for all the "delegate" resource commands
 func NewDelegateCommands() *cobra.Command {
 	dCmd := &cobra.Command{
 		Use:              "delegate",
@@ -29,7 +30,7 @@ func NewDelegateCommands() *cobra.Command {
 	}
 
 	//Commands
-	dCmd.AddCommand(NewDelegatesListCommand())
+	dCmd.AddCommand(newListCommand())
 
 	return dCmd
 }

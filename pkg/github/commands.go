@@ -30,7 +30,7 @@ func NewGitHubConnectorCommands() *cobra.Command {
 
 	//Commands
 
-	ghcCmd.AddCommand(NewGitHubConnectorCommand())
+	ghcCmd.AddCommand(newGitHubConnectorCommand())
 
 	return ghcCmd
 }

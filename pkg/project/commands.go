@@ -28,8 +28,8 @@ func NewProjectCommands() *cobra.Command {
 	}
 
 	//Commands
-	projectCmd.AddCommand(NewProjectCommand())
-	projectCmd.AddCommand(NewDeleteProjectCommand())
+	projectCmd.AddCommand(newProjectCommand())
+	projectCmd.AddCommand(newDeleteProjectCommand())
 
 	return projectCmd
 }
