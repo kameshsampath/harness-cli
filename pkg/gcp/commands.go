@@ -14,22 +14,21 @@
  *  limitations under the License.
  */
 
-package github
+package gcp
 
 import (
 	"github.com/spf13/cobra"
 )
 
-func NewGitHubConnectorCommands() *cobra.Command {
-	ghcCmd := &cobra.Command{
-		Use:              "github",
-		Short:            "Group of commands to manipulate the GitHub connectors.",
+func NewGCPConnectorCommands() *cobra.Command {
+	dCmd := &cobra.Command{
+		Use:              "gcp",
+		Short:            "Group of commands to manipulate the GCP connector.",
 		TraverseChildren: true,
 	}
 
 	//Commands
+	dCmd.AddCommand(NewGCPConnectorCommand())
 
-	ghcCmd.AddCommand(NewGitHubConnectorCommand())
-
-	return ghcCmd
+	return dCmd
 }

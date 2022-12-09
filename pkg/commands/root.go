@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/kameshsampath/harness-cli/pkg/connector"
+	"github.com/kameshsampath/harness-cli/pkg/delegate"
 	"github.com/kameshsampath/harness-cli/pkg/project"
 	"github.com/kameshsampath/harness-cli/pkg/secret"
 	log "github.com/sirupsen/logrus"
@@ -64,6 +65,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.AddCommand(project.NewProjectCommands())
 	rootCmd.AddCommand(secret.NewSecretCommands())
 	rootCmd.AddCommand(connector.NewConnectorsCommands())
+	rootCmd.AddCommand(delegate.NewDelegateCommands())
 
 	return rootCmd
 }

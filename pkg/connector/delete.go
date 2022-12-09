@@ -1,4 +1,4 @@
-package docker
+package connector
 
 import (
 	"encoding/json"
@@ -104,7 +104,7 @@ func (do *DeleteOptions) Execute(cmd *cobra.Command, args []string) error {
 	if v, ok := rm["status"]; ok && v == "SUCCESS" {
 		log.Tracef("%#v", rm)
 		if rm["data"].(bool) {
-			fmt.Printf(`Docker Registry Connector "%s" deleted successfully`, do.Name)
+			fmt.Printf(`Connector "%s" deleted successfully`, do.Name)
 		}
 	} else {
 		log.Errorf("%#v", rm)
@@ -119,25 +119,25 @@ func (do *DeleteOptions) Validate(cmd *cobra.Command, args []string) error {
 }
 
 // (TODO:kamesh) add more examples
-var commandExample = fmt.Sprintf(`
+var delCommandExample = fmt.Sprintf(`
   # Delete connector default options
-  %[1]s docker-registry delete --name foo --account-id <your account id> --project-id <project id>
+  %[1]s delete --name foo --account-id <your account id> --project-id <project id>
   # Delete connector specific project id
-  %[1]s docker-registry delete --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
+  %[1]s delete --name foo --account-id <your account id> --project-id <project id>  --org-id=<orgid>
   # Delete connector at account level
-  %[1]s docker-registry delete --name foo --account-id <your account id>  --secret-scope="account"
+  %[1]s delete --name foo --account-id <your account id>  --secret-scope="account"
   # Create delete at org level
-  %[1]s docker-registry delete --name foo --account-id <your account id>  --secret-scope="org"
+  %[1]s delete --name foo --account-id <your account id>  --secret-scope="org"
 `, common.ExamplePrefix())
 
 // NewDeleteDockerConnectorCommand instantiates the new instance of the NewDeleteDockerConnectorCommand
-func NewDeleteDockerConnectorCommand() *cobra.Command {
+func NewDeleteConnectorCommand() *cobra.Command {
 	do := &DeleteOptions{}
 
 	drCmd := &cobra.Command{
 		Use:     "delete",
-		Short:   "Deletes a Docker Registry Connector.",
-		Example: commandExample,
+		Short:   "Deletes a Connector.",
+		Example: delCommandExample,
 		RunE:    do.Execute,
 		PreRunE: do.Validate,
 	}

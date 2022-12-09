@@ -18,6 +18,7 @@ package connector
 
 import (
 	"github.com/kameshsampath/harness-cli/pkg/docker"
+	"github.com/kameshsampath/harness-cli/pkg/gcp"
 	"github.com/kameshsampath/harness-cli/pkg/github"
 	"github.com/spf13/cobra"
 )
@@ -32,6 +33,8 @@ func NewConnectorsCommands() *cobra.Command {
 	//Commands
 	connCmd.AddCommand(github.NewGitHubConnectorCommands())
 	connCmd.AddCommand(docker.NewDockerConnectorCommands())
+	connCmd.AddCommand(gcp.NewGCPConnectorCommands())
+	connCmd.AddCommand(NewDeleteConnectorCommand())
 
 	return connCmd
 }

@@ -30,7 +30,6 @@ func NewDockerConnectorCommands() *cobra.Command {
 	//Commands
 
 	dCmd.AddCommand(NewDockerConnectorCommand())
-	dCmd.AddCommand(NewDeleteDockerConnectorCommand())
 
 	return dCmd
 }
